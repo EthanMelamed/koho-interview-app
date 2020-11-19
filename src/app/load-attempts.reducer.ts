@@ -23,9 +23,6 @@ function reduce(state: State, action: { loadAttempt: LoadAttempt }): State {
     // Update state
     const newState = state.update(action.loadAttempt);
 
-    // Add the result to the output
-    newState.output.push();
-
     // return the new state
     return newState;
 }
