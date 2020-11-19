@@ -6,5 +6,9 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'koho-interview-app';
+  /** onInput
+   *  - Dispatches new input events when a new input file is added
+   */
+  onInput(file: File): void {
+  }
 }
