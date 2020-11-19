@@ -1,5 +1,8 @@
 // Angular Imports
 import { NgModule } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { BrowserModule } from '@angular/platform-browser';
 
 // NPM Imports
@@ -17,7 +20,10 @@ import { loadAttemptsReducer } from './load-attempts.reducer';
   ],
   imports: [
     BrowserModule,
-    StoreModule.forRoot({state: loadAttemptsReducer})
+    StoreModule.forRoot({state: loadAttemptsReducer}),
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,0 +1,17 @@
+input::-webkit-file-upload-button {
+    display: none;
+}
+input {
+    color: white;
+    width: 100%;
+    min-height: 100%;
+}
+
+.upload-icon {
+    position: fixed;
+    right: 50%;
+    left: 50%;
+    top: 50%;
+    color: rgb(49, 47, 47);
+    font-size: 40px;
+}

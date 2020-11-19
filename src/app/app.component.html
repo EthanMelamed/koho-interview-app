@@ -1,1 +1,11 @@
-<app-file-input (newFileEvent)="onInput($event)"></app-file-input>
+<div *ngIf='!(state$ | async)?.output?.length' class='drop-container'>
+    <button mat-fab class='fab-button' (click)='input.click()'><mat-icon>add</mat-icon></button>
+    <app-file-input #input (newFileEvent)='onInput($event)' class='file-input'></app-file-input>    
+</div>
+<div *ngIf='(state$ | async)?.output?.length'>
+    <button mat-fab class='fab-button' (click)='refresh()'><mat-icon>refresh</mat-icon></button>
+    <mat-card *ngFor='let output of (state$ | async)?.output'>
+        <span>{{'{ "id": '}} {{output.id}}, "customer_id": {{output.customer_id}}, "accepted": {{output.accepted}} {{'}'}}</span>
+        <span *ngIf='output.accepted' class='increase-amount'>+ ${{(state$ | async)?.history?.get(output.customer_id)?.loadAttempts?.get(output.id)?.load_amount_value}}</span>
+    </mat-card>
+</div>

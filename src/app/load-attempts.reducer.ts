@@ -2,7 +2,7 @@
 import { createReducer, on } from '@ngrx/store';
 
 // App Imports
-import { input } from './load-attempts.actions';
+import { input, refresh } from './load-attempts.actions';
 import { CustomerHistory, LoadAttempt, LoadAttemptResult, State } from './load-attempts.models';
 
 export const initialState: State = new State({
@@ -12,8 +12,13 @@ export const initialState: State = new State({
 
 export const loadAttemptsReducer = createReducer(
     initialState,
-    on(input, reduce)
+    on(input, reduce),
+    on(refresh, refreshReduce)
 );
+
+function refreshReduce(state: State): State {
+    return initialState;
+}
 
 /** reduce()
  *  - Processes an Action containing a list of load attempts and updates state

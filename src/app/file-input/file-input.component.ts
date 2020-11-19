@@ -1,5 +1,5 @@
 // Angular Imports
-import { Component, EventEmitter, HostListener, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Output, ViewChild } from '@angular/core';
 
 // App Imports
 import { LoadAttempt } from '../load-attempts.models';
@@ -13,9 +13,16 @@ export class FileInputComponent {
 
   @Output() newFileEvent = new EventEmitter<File>();
   @Output() errorEvent = new EventEmitter<LoadAttempt[]>();
+  @ViewChild('input') input: any;
 
   constructor() { }
 
+  /** click()*
+   *  - simulates a click event on the file input element 
+   */
+  click() {
+    this.input.nativeElement.click();
+  }
 
   /** onInput()
    *  - Emits a newFileEvent when a new file input on the component
@@ -35,6 +42,9 @@ export class FileInputComponent {
    */
   @HostListener('drop', ['$event'])
   onDrop(event: Event): void {
+    console.log('drop')
     this.onInput(event);
   }
+
+
 }

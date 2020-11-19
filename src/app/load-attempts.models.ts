@@ -61,13 +61,6 @@ export class CustomerHistory {
 
     add(loadAttempt: LoadAttempt): void {
 
-        // Ignore loadAttempts with duplicate Ids
-        if (this.loadAttempts.has(loadAttempt.id)) {
-            return;
-        }
-        // Add the loadAttempt to history
-        this.loadAttempts.set(loadAttempt.id, loadAttempt);
-
         // Create a new week when weeks is empty or if the previously recorded week is too far in the past.
         if (
             !this.week
@@ -285,11 +278,18 @@ export class State {
             newState.history.set(loadAttempt.customer_id, customerHistory);
         }
 
+        // Validate the load attempt and get a result
         const result = newState.validateLoad(loadAttempt);
 
         // If the load attempt was successful, add it to the customer's history
         if (result.accepted) {
             customerHistory.add(loadAttempt);
+        }
+
+
+        // Add the loadAttempt to history
+        if (!customerHistory.loadAttempts.has(loadAttempt.id)) {
+            customerHistory.loadAttempts.set(loadAttempt.id, loadAttempt);
         }
 
         // Add the result to ouput

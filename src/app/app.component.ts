@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 
 // App Imports
-import { input } from './load-attempts.actions';
+import { input, refresh } from './load-attempts.actions';
 import { LoadAttempt, State } from './load-attempts.models';
 import { LoadAttemptInputReaderService } from './load-attempt-input-reader.service';
 
@@ -16,11 +16,10 @@ import { LoadAttemptInputReaderService } from './load-attempt-input-reader.servi
 })
 export class AppComponent {
 
+  state$ = this.store.select('state');
+
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
-    // Subscribe to and log the current state to the console
-    store.select('state').subscribe(state => {
-      console.log('New State', state);
-    });
+  
   }
 
   /** onInput
@@ -40,5 +39,9 @@ export class AppComponent {
     .catch((err: any) => {
       console.error('File input failed', err);
     });
+  }
+
+  refresh() {
+    this.store.dispatch(refresh());
   }
 }
