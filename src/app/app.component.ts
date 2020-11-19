@@ -19,7 +19,7 @@ export class AppComponent {
   state$ = this.store.select('state');
 
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
-  
+
   }
 
   /** onInput
@@ -41,7 +41,7 @@ export class AppComponent {
     });
   }
 
-  refresh() {
+  refresh(): void {
     this.store.dispatch(refresh());
   }
 }

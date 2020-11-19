@@ -6,6 +6,6 @@
     <button mat-fab class='fab-button' (click)='refresh()'><mat-icon>refresh</mat-icon></button>
     <mat-card *ngFor='let output of (state$ | async)?.output'>
         <span>{{'{ "id": '}} {{output.id}}, "customer_id": {{output.customer_id}}, "accepted": {{output.accepted}} {{'}'}}</span>
-        <span *ngIf='output.accepted' class='increase-amount'>+ ${{(state$ | async)?.history?.get(output.customer_id)?.loadAttempts?.get(output.id)?.load_amount_value}}</span>
+        <span *ngIf='output.accepted' class='increase-amount'>${{(state$ | async)?.history?.get(output.customer_id)?.loadAttempts?.get(output.id)?.load_amount_value}}</span>
     </mat-card>
 </div>

@@ -18,9 +18,9 @@ export class FileInputComponent {
   constructor() { }
 
   /** click()*
-   *  - simulates a click event on the file input element 
+   *  - simulates a click event on the file input element
    */
-  click() {
+  click(): void {
     this.input.nativeElement.click();
   }
 
@@ -42,7 +42,6 @@ export class FileInputComponent {
    */
   @HostListener('drop', ['$event'])
   onDrop(event: Event): void {
-    console.log('drop')
     this.onInput(event);
   }
 
