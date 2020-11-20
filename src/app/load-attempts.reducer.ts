@@ -16,18 +16,22 @@ export const loadAttemptsReducer = createReducer(
     on(refresh, refreshReduce)
 );
 
-function refreshReduce(state: State): State {
+export function refreshReduce(state: State): State {
     return initialState;
 }
 
 /** reduce()
  *  - Processes an Action containing a list of load attempts and updates state
  */
-function reduce(state: State, action: { loadAttempt: LoadAttempt }): State {
+export function reduce(state: State, action: { loadAttempt: LoadAttempt }): State {
 
     // Update state
-    const newState = state.update(action.loadAttempt);
-
-    // return the new state
-    return newState;
+    try {
+        const newState = state.update(action.loadAttempt);
+        return newState;
+    }
+    catch (e) {
+        // state was not updated
+        return state;
+    }
 }

@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 
 // NPM Imports
 import { Store } from '@ngrx/store';
+import { debounceTime } from 'rxjs/operators';
 
 // App Imports
 import { input, refresh } from './load-attempts.actions';
@@ -16,10 +17,21 @@ import { LoadAttemptInputReaderService } from './load-attempt-input-reader.servi
 })
 export class AppComponent {
 
-  state$ = this.store.select('state');
+  // Get a debounced observable for the state
+  state$ = this.store.select('state').pipe(debounceTime(1000));
+  processingFile = false;
 
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
-
+    this.state$.subscribe(state => {
+      let output = ''
+      state.output.forEach(result => {
+        output += `{"id":"${result.id}","customer_id":"${result.customer_id}","accepted":${result.accepted}}\n`;
+      });
+      setTimeout(() => {
+        console.log(output);
+      }, 500);
+      this.processingFile = false;
+    });
   }
 
   /** onInput
@@ -27,6 +39,7 @@ export class AppComponent {
    */
   onInput(file: File): void {
 
+    this.processingFile = true;
     // Extract the the load attempts from the file
     this.inputService.extractLoadAttemptsFromFile(file)
     .then((loadAttempts: LoadAttempt[]) => {

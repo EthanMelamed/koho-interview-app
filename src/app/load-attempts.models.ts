@@ -29,7 +29,7 @@ abstract class TimeBlock {
         }
     }
 
-    abstract add(loadAttempt: LoadAttempt): void;
+    abstract add(loadAttempt: LoadAttempt): boolean;
     abstract hasInTimeRange(date: Date): boolean;
     protected abstract setTimeRange(date: Date): void;
 }
@@ -43,15 +43,15 @@ export class CustomerHistory {
     loadAttempts: Map<string, LoadAttempt> = new Map<string, LoadAttempt>();
 
     // Keeps track of the current week's load attempt for verification purposes
-    week: Week | undefined;
+    lastWeek: Week | undefined;
 
     constructor(config?: {
         loadAttempts?: Map<string, LoadAttempt>,
-        week?: Week
+        lastWeek?: Week
     }) {
         if (config) {
-            if (config.week) {
-                this.week = new Week(config.week);
+            if (config.lastWeek) {
+                this.lastWeek = new Week(config.lastWeek);
             }
             if (config.loadAttempts) {
                 this.loadAttempts = new Map(config.loadAttempts);
@@ -59,23 +59,31 @@ export class CustomerHistory {
         }
     }
 
-    add(loadAttempt: LoadAttempt): void {
+    add(loadAttempt: LoadAttempt): boolean {
+
+        // Add load attempt
+        if(!this.loadAttempts.has(loadAttempt.id)) {
+            this.loadAttempts.set(loadAttempt.id, loadAttempt);
+        }
+        else {
+            throw new Error();
+        }
 
         // Create a new week when weeks is empty or if the previously recorded week is too far in the past.
         if (
-            !this.week
+            !this.lastWeek
             || !(
-                this.week.start
-                && this.week.end
-                && this.week.start <= loadAttempt.time
-                && loadAttempt.time <= this.week.end
+                this.lastWeek.start
+                && this.lastWeek.end
+                && this.lastWeek.start <= loadAttempt.time
+                && loadAttempt.time <= this.lastWeek.end
             )
         ) {
-            this.week = new Week({time: loadAttempt.time});
+            this.lastWeek = new Week({time: loadAttempt.time});
         }
 
         // Update
-        this.week.add(loadAttempt);
+        return this.lastWeek.add(loadAttempt);
     }
 }
 
@@ -83,11 +91,11 @@ export class CustomerHistory {
  *  - Represents a one day time block (24 hours) of a user's history
  */
 export class Day extends TimeBlock {
-    loadAttempts: LoadAttempt[] = [];
+    loadAttempts: number = 0;
 
     constructor(config?: {
         end?: Date,
-        loadAttempts?: LoadAttempt[],
+        loadAttempts?: number,
         start?: Date,
         time?: Date,
         total?: number
@@ -95,15 +103,36 @@ export class Day extends TimeBlock {
         super(config);
         if (config) {
             if (config.loadAttempts) {
-                this.loadAttempts.push(...config.loadAttempts.map(loadAttempt => new LoadAttempt(loadAttempt)));
+                this.loadAttempts = config.loadAttempts;
             }
         }
     }
 
     // Add a load attempt to the day
-    add(loadAttempt: LoadAttempt): void {
-        this.loadAttempts.push(loadAttempt);
+    add(loadAttempt: LoadAttempt): boolean {
+
+        // Throw an error if the load attempt was not made on this day
+        if (!this.hasInTimeRange(loadAttempt.time)) {
+            throw new Error();
+        }
+
+
+        // Deny if new funds would exceed the daily limit
+        if (this.total + loadAttempt.load_amount_value > 5000) {
+            return false;
+        }
+
+        // Deny if load attempt would excced the maximum number of load attempts
+        if (this.loadAttempts >= 3) {
+            return false;
+        }
+
+        // Increment the number of load attempts and the total for the day
+        this.loadAttempts++;
         this.total += loadAttempt.load_amount_value;
+
+        // Return true since add was successful
+        return true;
     }
 
     /** isInTimeRange()
@@ -204,64 +233,6 @@ export class State {
         }
     }
 
-    /** validateLoad()
-     *  - validates whether a load attempt will be successful or not
-     */
-    validateLoad(loadAttempt: LoadAttempt): LoadAttemptResult {
-        let accepted = true;
-
-        const history = this.history.get(loadAttempt.customer_id);
-
-        // Deny if load amount is over the daily limit
-        if (loadAttempt.load_amount_value > 5000) {
-            accepted = false;
-        }
-        // Validate the cases where the customer history already exists (not the customer's first load attempt ever)
-        else if (history) {
-
-            // Deny if the load attempt id is a duplicate
-            if (history.loadAttempts.has(loadAttempt.id)) {
-                accepted = false;
-            }
-
-            // Validate the cases where the week already exists (not the customer's first load attempt of the week)
-            else if (history.week?.hasInTimeRange(loadAttempt.time)) {
-
-                // Deny if the new funds would exceed the weekly limit
-                if (history.week.total + loadAttempt.load_amount_value > 20000) {
-                    accepted = false;
-                }
-                else {
-                    const day = history.week.days.pop();
-                    if (day) {
-                        history.week.days.push(day);
-
-                        // Validate the cases where the Day already exists (not the customer's first load attempt of the day)
-                        if (day.hasInTimeRange(loadAttempt.time)) {
-
-                            // Deny if new funds would exceed the daily limit
-                            if (day.total + loadAttempt.load_amount_value > 5000) {
-                                accepted = false;
-                            }
-
-                            // Deny if load attempt would excced the maximum number of load attempts
-                            if (day.loadAttempts.length >= 3) {
-                                accepted = false;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Return the result
-        return new LoadAttemptResult({
-            accepted,
-            customer_id: loadAttempt.customer_id,
-            id: loadAttempt.id
-        });
-    }
-
     /** update()
      *  - Returns an new instance of state after apply the update
      *  - This function is non-destructive
@@ -278,22 +249,15 @@ export class State {
             newState.history.set(loadAttempt.customer_id, customerHistory);
         }
 
-        // Validate the load attempt and get a result
-        const result = newState.validateLoad(loadAttempt);
-
-        // If the load attempt was successful, add it to the customer's history
-        if (result.accepted) {
-            customerHistory.add(loadAttempt);
-        }
-
-
-        // Add the loadAttempt to history
-        if (!customerHistory.loadAttempts.has(loadAttempt.id)) {
-            customerHistory.loadAttempts.set(loadAttempt.id, loadAttempt);
-        }
+        // Try to add the loadAttempt
+        let result = customerHistory.add(loadAttempt);
 
         // Add the result to ouput
-        newState.output.push(result);
+        newState.output.push(new LoadAttemptResult({
+            accepted: result,
+            customer_id: loadAttempt.customer_id,
+            id: loadAttempt.id
+        }));
 
         // Return the new state
         return newState;
@@ -304,10 +268,10 @@ export class State {
  *  - Represents a one week time block (7 days) of a user's history
  */
 export class Week extends TimeBlock {
-    days: Day[] = [];
+    lastDay: Day | undefined;
 
     constructor(config?: {
-        days?: Day[],
+        lastDay?: Day,
         end?: Date,
         start?: Date,
         time?: Date,
@@ -315,42 +279,58 @@ export class Week extends TimeBlock {
     }) {
         super(config);
         if (config) {
-            if (config.days) {
-                this.days.push(...config.days.map(day => new Day(day)));
+            if (config.lastDay) {
+                this.lastDay = new Day(config.lastDay);
             }
         }
     }
 
-
     /** add()
      *  - adds a loaded funds record to the week.
      */
-    add(loadAttempt: LoadAttempt): void {
+    add(loadAttempt: LoadAttempt): boolean {
 
-        // Create a new day when days is empty or if the previously recorded day is too far in the past.
-        let day = this.days.pop();
-        const isCorrectDay = (d: Day) => (d.start && d.end && d.start <= loadAttempt.time && loadAttempt.time <= d.end);
+        // Validate
+        if (!this.hasInTimeRange(loadAttempt.time)) {
+            return false;
+        }
+
+        // Deny if the new funds would exceed the weekly limit
+        else if (this.total + loadAttempt.load_amount_value > 20000) {
+            return false;
+        }
+
+        // Try adding load attempt to day
+        let day = this.lastDay;
+        let added: boolean;
         if (!day) {
             day = new Day({time: loadAttempt.time});
         }
-        else if (day && !isCorrectDay(day)) {
-            this.days.push(day);
+        try {
+            added = day.add(loadAttempt);
+        }
+        catch (e) {
             day = new Day({time: loadAttempt.time});
+            added = day.add(loadAttempt);
         }
 
-        // Increment the total loaded funds for the week
-        this.total += loadAttempt.load_amount_value;
+        // If the funds were added, increment the total loaded funds for the week
+        if (added) {
+            this.total += loadAttempt.load_amount_value;
+        }
 
         // Update
-        day.add(loadAttempt);
-        this.days.push(day);
+        this.lastDay = day;
+
+        // Return result
+        return added;
     }
 
     /** isInTimeRange()
      *  - determines whether a given date falls within range of the timeblock
      */
     hasInTimeRange(date: Date): boolean {
-        return (this.start && this.end && this.start <= date  && date <= this.end) ? true : false;
+        return (this.start && this.end && this.start <= date && date <= this.end) ? true : false;
     }
 
     /** setTimeRange()
@@ -362,7 +342,7 @@ export class Week extends TimeBlock {
         const weekLength = 7 * dayLength;
 
         // Get the datetime for the last millisecond of the previous week
-        const endOfLastWeek = new Date(date.getTime() - dayLength * date.getUTCDay());
+        const endOfLastWeek = new Date(date.getTime() - dayLength * (date.getUTCDay() || 7));
         endOfLastWeek.setUTCHours(23, 59, 59, 999);
 
         // Set the start time to the first millisecond of the week

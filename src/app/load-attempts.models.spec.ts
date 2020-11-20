@@ -22,11 +22,20 @@ describe('Day', () => {
     });
 });
 
-describe('State', () => {
+describe('LoadAttempt', () => {
     describe('test constructor()', () => {
         // write tests
     });
-    describe('test validateLoad()', () => {
+});
+
+describe('LoadAttemptResult', () => {
+    describe('test constructor()', () => {
+        // write tests
+    });
+});
+
+describe('State', () => {
+    describe('test constructor()', () => {
         // write tests
     });
     describe('test update()', () => {
