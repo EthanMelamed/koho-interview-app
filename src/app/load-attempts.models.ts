@@ -29,8 +29,14 @@ abstract class TimeBlock {
         }
     }
 
+    /** isInTimeRange()
+     *  - determines whether a given date falls within range of the timeblock
+     */
+    hasInTimeRange(date: Date): boolean {
+        return (this.start && this.end && this.start <= date && date <= this.end) ? true : false;
+    }
+    
     abstract add(loadAttempt: LoadAttempt): boolean;
-    abstract hasInTimeRange(date: Date): boolean;
     protected abstract setTimeRange(date: Date): void;
 }
 
@@ -70,15 +76,7 @@ export class CustomerHistory {
         }
 
         // Create a new week when weeks is empty or if the previously recorded week is too far in the past.
-        if (
-            !this.lastWeek
-            || !(
-                this.lastWeek.start
-                && this.lastWeek.end
-                && this.lastWeek.start <= loadAttempt.time
-                && loadAttempt.time <= this.lastWeek.end
-            )
-        ) {
+        if (!this.lastWeek || !this.lastWeek.hasInTimeRange(loadAttempt.time)) {
             this.lastWeek = new Week({time: loadAttempt.time});
         }
 
@@ -133,13 +131,6 @@ export class Day extends TimeBlock {
 
         // Return true since add was successful
         return true;
-    }
-
-    /** isInTimeRange()
-     *  - determines whether a given date falls within range of the timeblock
-     */
-    hasInTimeRange(date: Date): boolean {
-        return (this.start && this.end && this.start <= date  && date <= this.end) ? true : false;
     }
 
     /** setTimeRange()
@@ -292,7 +283,7 @@ export class Week extends TimeBlock {
 
         // Validate
         if (!this.hasInTimeRange(loadAttempt.time)) {
-            return false;
+            throw new Error();
         }
 
         // Deny if the new funds would exceed the weekly limit
@@ -303,16 +294,10 @@ export class Week extends TimeBlock {
         // Try adding load attempt to day
         let day = this.lastDay;
         let added: boolean;
-        if (!day) {
+        if (!day || !day.hasInTimeRange(loadAttempt.time)) {
             day = new Day({time: loadAttempt.time});
         }
-        try {
-            added = day.add(loadAttempt);
-        }
-        catch (e) {
-            day = new Day({time: loadAttempt.time});
-            added = day.add(loadAttempt);
-        }
+        added = day.add(loadAttempt);
 
         // If the funds were added, increment the total loaded funds for the week
         if (added) {
@@ -326,12 +311,6 @@ export class Week extends TimeBlock {
         return added;
     }
 
-    /** isInTimeRange()
-     *  - determines whether a given date falls within range of the timeblock
-     */
-    hasInTimeRange(date: Date): boolean {
-        return (this.start && this.end && this.start <= date && date <= this.end) ? true : false;
-    }
 
     /** setTimeRange()
      *  - sets the time range for the week
