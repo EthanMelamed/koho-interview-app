@@ -18,7 +18,7 @@ import { LoadAttemptInputReaderService } from './load-attempt-input-reader.servi
 export class AppComponent {
 
   // Get a debounced observable for the state
-  state$ = this.store.select('state').pipe(debounceTime(1000));
+  state$ = this.store.select('state').pipe(debounceTime(100));
   processingFile = false;
 
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
