@@ -35,7 +35,7 @@ abstract class TimeBlock {
     hasInTimeRange(date: Date): boolean {
         return (this.start && this.end && this.start <= date && date <= this.end) ? true : false;
     }
-    
+
     abstract add(loadAttempt: LoadAttempt): boolean;
     protected abstract setTimeRange(date: Date): void;
 }
@@ -68,7 +68,7 @@ export class CustomerHistory {
     add(loadAttempt: LoadAttempt): boolean {
 
         // Add load attempt
-        if(!this.loadAttempts.has(loadAttempt.id)) {
+        if (!this.loadAttempts.has(loadAttempt.id)) {
             this.loadAttempts.set(loadAttempt.id, loadAttempt);
         }
         else {
@@ -89,7 +89,7 @@ export class CustomerHistory {
  *  - Represents a one day time block (24 hours) of a user's history
  */
 export class Day extends TimeBlock {
-    loadAttempts: number = 0;
+    loadAttempts = 0;
 
     constructor(config?: {
         end?: Date,
@@ -241,7 +241,7 @@ export class State {
         }
 
         // Try to add the loadAttempt
-        let result = customerHistory.add(loadAttempt);
+        const result = customerHistory.add(loadAttempt);
 
         // Add the result to ouput
         newState.output.push(new LoadAttemptResult({

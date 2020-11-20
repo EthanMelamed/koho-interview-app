@@ -1,4 +1,4 @@
-import { CustomerHistory, Day, LoadAttempt, Week } from "./load-attempts.models";
+import { CustomerHistory, Day, LoadAttempt, Week } from './load-attempts.models';
 
 const DAYLENGTH = 24 * 60 * 60 * 1000;
 
@@ -7,12 +7,12 @@ describe('TimeBlock', () => {
         // write tests
     });
     describe('test hasInTimeRange()', () => {
-        let now = new Date();
-        let timeBlock = new Day({time: now});
+        const now = new Date();
+        const timeBlock = new Day({time: now});
         it('should return false if too far in the past', () => {
             expect(timeBlock.hasInTimeRange(new Date(now.getTime() - DAYLENGTH))).toBeFalse();
         });
-        
+
         it('should return false if too far in the future', () => {
             expect(timeBlock.hasInTimeRange(new Date(now.getTime() + DAYLENGTH))).toBeFalse();
         });
@@ -38,7 +38,7 @@ describe('CustomerHistory', () => {
             expect(history.lastWeek).toBeFalsy();
         });
         it('should copy loadAttempts when they are passed in', () => {
-            let now = new Date();
+            const now = new Date();
             const loadAttempt = new LoadAttempt({
                 customer_id: '0',
                 id: '0',
@@ -52,13 +52,13 @@ describe('CustomerHistory', () => {
             expect(history.loadAttempts.get(loadAttempt.id)).toBeTruthy();
         });
         it('should copy lastWeek when one is passed in', () => {
-            const lastWeek = new Week({time: new Date()})
+            const lastWeek = new Week({time: new Date()});
             const history = new CustomerHistory({lastWeek});
             expect(history.lastWeek).toBeTruthy();
         });
     });
     describe('test add()', () => {
-        let now = new Date();
+        const now = new Date();
         const loadAttempt = new LoadAttempt({
             customer_id: '0',
             id: '0',
@@ -72,7 +72,7 @@ describe('CustomerHistory', () => {
         });
 
         it('should call Week.add() if week is not null', () => {
-            const lastWeek = new Week({time: new Date()})
+            const lastWeek = new Week({time: new Date()});
             const history = new CustomerHistory({lastWeek});
             spyOn(history.lastWeek as Week, 'add').and.returnValue(true);
             history.add(loadAttempt);
@@ -99,7 +99,7 @@ describe('Day', () => {
         // write tests
     });
     describe('test add()', () => {
-        let now = new Date();
+        const now = new Date();
         const loadAttempt = new LoadAttempt({
             customer_id: '0',
             id: '0',
@@ -165,7 +165,7 @@ describe('Week', () => {
         // write tests
     });
     describe('test add()', () => {
-        let now = new Date();
+        const now = new Date();
         const loadAttempt = new LoadAttempt({
             customer_id: '0',
             id: '0',

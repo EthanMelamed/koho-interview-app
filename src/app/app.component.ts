@@ -23,7 +23,7 @@ export class AppComponent {
 
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
     this.state$.subscribe(state => {
-      let output = ''
+      let output = '';
       state.output.forEach(result => {
         output += `{"id":"${result.id}","customer_id":"${result.customer_id}","accepted":${result.accepted}}\n`;
       });
@@ -55,6 +55,7 @@ export class AppComponent {
   }
 
   refresh(): void {
+    this.processingFile = true;
     this.store.dispatch(refresh());
   }
 }
