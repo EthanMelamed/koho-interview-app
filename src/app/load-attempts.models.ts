@@ -13,24 +13,22 @@ abstract class TimeBlock {
         time?: Date,
         total?: number
     }) {
-        if (config) {
-            if (config.end) {
-                this.end = new Date(config.end);
-            }
-            if (config.start) {
-                this.start = new Date(config.start);
-            }
-            if (config.time) {
-                this.setTimeRange(new Date(config.time));
-            }
-            if (config.total) {
-                this.total = config.total;
-            }
+        if (config?.end) {
+            this.end = new Date(config.end);
+        }
+        if (config?.start) {
+            this.start = new Date(config.start);
+        }
+        if (config?.time) {
+            this.setTimeRange(new Date(config.time));
+        }
+        if (config?.total) {
+            this.total = config.total;
         }
     }
 
     /** isInTimeRange()
-     *  - determines whether a given date falls within range of the timeblock
+     *  - determines whether a given date falls within range
      */
     hasInTimeRange(date: Date): boolean {
         return (this.start && this.end && this.start <= date && date <= this.end) ? true : false;
@@ -45,7 +43,7 @@ abstract class TimeBlock {
  */
 export class CustomerHistory {
 
-    // A map to keep track of past laod attempts. Used to search for duplicate ids, and fast mapping with results
+    // A map to keep track of past load attempts. Used to search for duplicate ids, and fast mapping to results
     loadAttempts: Map<string, LoadAttempt> = new Map<string, LoadAttempt>();
 
     // Keeps track of the current week's load attempt for verification purposes
@@ -55,16 +53,17 @@ export class CustomerHistory {
         loadAttempts?: Map<string, LoadAttempt>,
         lastWeek?: Week
     }) {
-        if (config) {
-            if (config.lastWeek) {
-                this.lastWeek = new Week(config.lastWeek);
-            }
-            if (config.loadAttempts) {
-                this.loadAttempts = new Map(config.loadAttempts);
-            }
+        if (config?.lastWeek) {
+            this.lastWeek = new Week(config.lastWeek);
+        }
+        if (config?.loadAttempts) {
+            this.loadAttempts = new Map(config.loadAttempts);
         }
     }
 
+    /** add()
+     *  - Try loading funds, returns true when funds are accepted, false otherwise
+     */
     add(loadAttempt: LoadAttempt): boolean {
 
         // Add load attempt
@@ -72,11 +71,12 @@ export class CustomerHistory {
             this.loadAttempts.set(loadAttempt.id, loadAttempt);
         }
         else {
+            // Throw an error when the id has already been used
             throw new Error();
         }
 
-        // Create a new week when weeks is empty or if the previously recorded week is too far in the past.
-        if (!this.lastWeek || !this.lastWeek.hasInTimeRange(loadAttempt.time)) {
+        // Create a new week when lastWeek is empty or if the previously recorded week is too far in the past.
+        if (!this.lastWeek?.hasInTimeRange(loadAttempt.time)) {
             this.lastWeek = new Week({time: loadAttempt.time});
         }
 
@@ -99,10 +99,8 @@ export class Day extends TimeBlock {
         total?: number
     }) {
         super(config);
-        if (config) {
-            if (config.loadAttempts) {
-                this.loadAttempts = config.loadAttempts;
-            }
+        if (config?.loadAttempts) {
+            this.loadAttempts = config.loadAttempts;
         }
     }
 
@@ -164,23 +162,13 @@ export class LoadAttempt {
     time: Date;
 
     constructor(config: LoadAttempt) {
-        if (!config.customer_id || !config.id || !config.load_amount) {
-            throw new Error('Invalid LoadAttempt Object');
-        }
         this.id = config.id;
         this.customer_id = config.customer_id;
         this.load_amount = config.load_amount;
         let load_amount_value = 0;
 
-        // Parse the currency value from load_aount
-        if (this.load_amount) {
-            try {
-                load_amount_value = parseFloat(config.load_amount.replace(/[$, ]/g, ''));
-            }
-            catch (err) {
-                console.error('Error parsing currency value', config.load_amount, err);
-            }
-        }
+        // Parse the currency value from load_amount
+        load_amount_value = parseFloat(config.load_amount.replace(/[$, ]/g, ''));
         this.load_amount_value = load_amount_value;
         this.time = new Date(config.time);
     }
@@ -212,15 +200,11 @@ export class State {
         history: Map<string, CustomerHistory>,
         output: LoadAttemptResult[]
     }) {
-        if (config) {
-            if (config.history) {
-                config.history.forEach((value, key) => {
-                    this.history.set(key, new CustomerHistory(value));
-                });
-            }
-            if (config.output) {
-                this.output.push(...config.output.map(result => new LoadAttemptResult(result)));
-            }
+        if (config?.history) {
+            config.history.forEach((value, key) => this.history.set(key, new CustomerHistory(value)));
+        }
+        if (config?.output) {
+            this.output.push(...config.output.map(result => new LoadAttemptResult(result)));
         }
     }
 
@@ -269,10 +253,8 @@ export class Week extends TimeBlock {
         total?: number
     }) {
         super(config);
-        if (config) {
-            if (config.lastDay) {
-                this.lastDay = new Day(config.lastDay);
-            }
+        if (config?.lastDay) {
+            this.lastDay = new Day(config.lastDay);
         }
     }
 
@@ -294,7 +276,7 @@ export class Week extends TimeBlock {
         // Try adding load attempt to day
         let day = this.lastDay;
         let added: boolean;
-        if (!day || !day.hasInTimeRange(loadAttempt.time)) {
+        if (!day?.hasInTimeRange(loadAttempt.time)) {
             day = new Day({time: loadAttempt.time});
         }
         added = day.add(loadAttempt);

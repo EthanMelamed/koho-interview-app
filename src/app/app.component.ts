@@ -19,6 +19,7 @@ export class AppComponent {
 
   // Get a debounced observable for the state
   state$ = this.store.select('state').pipe(debounceTime(100));
+  lastInputTime: Date | undefined;
   processingFile = false;
 
   constructor(private store: Store<{state: State}>, private inputService: LoadAttemptInputReaderService) {
@@ -27,10 +28,19 @@ export class AppComponent {
       state.output.forEach(result => {
         output += `{"id":"${result.id}","customer_id":"${result.customer_id}","accepted":${result.accepted}}\n`;
       });
-      setTimeout(() => {
-        console.log(output);
-      }, 500);
+
+      if (output) {
+        if (this.lastInputTime) {
+          console.log('Processed in ' + (new Date().getTime() - this.lastInputTime.getTime()) / 1000 + ' seconds');
+        }
+
+      // Print output on a timeout to give the screen a chance to render first
+        setTimeout(() => {
+          console.log(output);
+        }, 2000);
+      }
       this.processingFile = false;
+
     });
   }
 
@@ -40,6 +50,7 @@ export class AppComponent {
   onInput(file: File): void {
 
     this.processingFile = true;
+    this.lastInputTime = new Date();
     // Extract the the load attempts from the file
     this.inputService.extractLoadAttemptsFromFile(file)
     .then((loadAttempts: LoadAttempt[]) => {
